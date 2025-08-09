@@ -15,6 +15,7 @@ import {
   Battery,
   Signal
 } from "lucide-react";
+import { ConnectionStatus } from "@/components/ConnectionStatus";
 
 const FieldInterface = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -139,6 +140,9 @@ const FieldInterface = () => {
       </header>
 
       <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Connection Status */}
+        <ConnectionStatus showDetails />
+        
         {/* Connection Status Card */}
         {!isOnline && (
           <Card className="border-warning bg-warning/5">
