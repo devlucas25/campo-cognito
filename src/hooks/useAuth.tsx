@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, handleSupabaseError, withRetry } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -65,18 +65,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await withRetry(() => 
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+      );
       
       if (error) {
         toast({
           variant: "destructive",
           title: "Erro no login",
-          description: error.message === 'Invalid login credentials' 
-            ? 'Email ou senha incorretos' 
-            : error.message,
+          description: handleSupabaseError(error),
         });
       }
       
@@ -95,24 +95,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
+      const { error } = await withRetry(() =>
+        supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: {
+              full_name: fullName,
+            }
           }
-        }
-      });
+        })
+      );
       
       if (error) {
         toast({
           variant: "destructive",
           title: "Erro no cadastro",
-          description: error.message === 'User already registered' 
-            ? 'Este email já está cadastrado' 
-            : error.message,
+          description: handleSupabaseError(error),
         });
       } else {
         toast({
@@ -134,13 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await withRetry(() => supabase.auth.signOut());
       
       if (error) {
         toast({
           variant: "destructive",
           title: "Erro ao sair",
-          description: error.message,
+          description: handleSupabaseError(error),
         });
       }
       

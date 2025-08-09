@@ -5,13 +5,128 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://xvmyzydnunhhaqpxfmdl.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2bXl6eWRudW5oaGFxcHhmbWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NjYyMzYsImV4cCI6MjA3MDM0MjIzNn0.ioY4rV0DLH8fSjBx0CEW6VSVnCY3AI1YeEjsKsILc-s";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  throw new Error('Missing Supabase environment variables');
+}
 
+// Enhanced Supabase client configuration
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: typeof window !== 'undefined' ? localStorage : undefined,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    debug: process.env.NODE_ENV === 'development'
+  },
+  db: {
+    schema: 'public'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'campo-quest@1.0.0'
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });
+
+// Connection health check
+export const checkSupabaseConnection = async (): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('id')
+      .limit(1);
+    
+    return !error;
+  } catch (error) {
+    console.error('Supabase connection check failed:', error);
+    return false;
+  }
+};
+
+// Enhanced error handling for auth operations
+export const handleSupabaseError = (error: any): string => {
+  if (!error) return '';
+  
+  // Common auth errors with user-friendly messages
+  const errorMessages: Record<string, string> = {
+    'Invalid login credentials': 'Email ou senha incorretos',
+    'User already registered': 'Este email já está cadastrado',
+    'Email not confirmed': 'Confirme seu email antes de fazer login',
+    'Password should be at least 6 characters': 'A senha deve ter pelo menos 6 caracteres',
+    'Invalid email': 'Email inválido',
+    'Signup is disabled': 'Cadastro temporariamente desabilitado',
+    'Email rate limit exceeded': 'Muitas tentativas. Tente novamente em alguns minutos',
+    'Database connection error': 'Erro de conexão. Tente novamente',
+    'Network request failed': 'Erro de rede. Verifique sua conexão'
+  };
+
+  return errorMessages[error.message] || error.message || 'Erro desconhecido';
+};
+
+// Retry mechanism for failed requests
+export const withRetry = async <T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt - 1)));
+    }
+  }
+  
+  throw lastError;
+};
+
+// Connection status monitoring
+export const monitorConnection = () => {
+  if (typeof window === 'undefined') return;
+  
+  let isOnline = navigator.onLine;
+  
+  const handleOnline = () => {
+    if (!isOnline) {
+      isOnline = true;
+      console.log('Connection restored - Supabase client ready');
+      // Trigger any pending sync operations here
+    }
+  };
+  
+  const handleOffline = () => {
+    if (isOnline) {
+      isOnline = false;
+      console.log('Connection lost - Switching to offline mode');
+    }
+  };
+  
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+  
+  return () => {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+  };
+};
+
+// Initialize connection monitoring
+if (typeof window !== 'undefined') {
+  monitorConnection();
+}

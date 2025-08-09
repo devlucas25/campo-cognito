@@ -16,6 +16,7 @@ import {
   CheckCircle,
   AlertTriangle
 } from "lucide-react";
+import { ConnectionStatus } from "@/components/ConnectionStatus";
 
 const AdminDashboard = () => {
   const [selectedSurvey, setSelectedSurvey] = useState("municipal-2024");
@@ -80,6 +81,9 @@ const AdminDashboard = () => {
       </header>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Connection Status */}
+        <ConnectionStatus showDetails />
+        
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {metrics.map((metric, index) => (
