@@ -1,9 +1,180 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Users, MapPin, Shield, CheckCircle, TrendingUp } from "lucide-react";
+import { 
+  BarChart3, 
+  MapPin, 
+  Users, 
+  Shield,
+  CheckCircle,
+  Clock,
+  Database,
+  Smartphone,
+  Globe,
+  ArrowRight,
+  LogOut,
+  TrendingUp
+} from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const [activeDemo, setActiveDemo] = useState("admin");
+  const { user, signOut, isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Authenticated user dashboard
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+        <header className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Campo Quest
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Bem-vindo de volta! Selecione sua área de trabalho.
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sair
+            </Button>
+          </div>
+        </header>
+
+        <div className="container mx-auto px-6 pb-20">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Admin Dashboard */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <BarChart3 className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl">Painel Administrativo</CardTitle>
+                <CardDescription>
+                  Gerencie pesquisas, analise dados e monitore entrevistadores
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span>Criar e editar pesquisas</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span>Relatórios e analytics</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span>Monitoramento em tempo real</span>
+                  </div>
+                </div>
+                {isAdmin ? (
+                  <Button 
+                    className="w-full" 
+                    onClick={() => handleNavigation('/admin')}
+                  >
+                    Acessar Painel
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <div className="text-center py-2">
+                    <Badge variant="secondary">Acesso Restrito</Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Apenas administradores
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Field Interface */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-accent to-accent/60 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Smartphone className="h-8 w-8 text-white" />
+                </div>
+                <CardTitle className="text-xl">Interface de Campo</CardTitle>
+                <CardDescription>
+                  Colete entrevistas com GPS e funcionalidade offline
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span>Formulários offline</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span>GPS automático</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-success" />
+                    <span>Sincronização inteligente</span>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full" 
+                  variant="electoral"
+                  onClick={() => handleNavigation('/field')}
+                >
+                  Iniciar Coleta
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-16">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">24/7</div>
+              <div className="text-sm text-muted-foreground">Disponibilidade</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">±2.1%</div>
+              <div className="text-sm text-muted-foreground">Margem Erro</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">100%</div>
+              <div className="text-sm text-muted-foreground">Offline</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">GPS</div>
+              <div className="text-sm text-muted-foreground">Alta Precisão</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Landing page for non-authenticated users
   const features = [
     { 
       icon: Shield, 
@@ -55,13 +226,12 @@ const Index = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Button variant="electoral" size="lg" onClick={() => window.location.href = '/admin'}>
-                <BarChart3 className="mr-2 h-5 w-5" />
-                Painel Administrativo
+              <Button variant="electoral" size="lg" onClick={() => navigate('/login')}>
+                Começar Agora
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button variant="secondary" size="lg" onClick={() => window.location.href = '/field'}>
-                <Users className="mr-2 h-5 w-5" />
-                Interface de Campo
+              <Button variant="secondary" size="lg" onClick={() => setActiveDemo("demo")}>
+                Ver Demo
               </Button>
             </div>
           </div>

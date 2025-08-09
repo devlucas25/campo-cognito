@@ -78,8 +78,7 @@ const FieldInterface = () => {
   ];
 
   const handleStartSurvey = (assignmentId: string) => {
-    // Navigate to survey form
-    console.log(`Starting survey for assignment: ${assignmentId}`);
+    window.location.href = `/survey/${assignmentId}`;
   };
 
   const handleSync = () => {
